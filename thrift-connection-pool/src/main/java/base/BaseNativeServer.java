@@ -21,23 +21,26 @@ public class BaseNativeServer {
 	private static final Logger log = LoggerFactory.getLogger(BaseNativeServer.class);
 
 	public static void main(String[] args) throws Exception {
+		
 		final MetricRegistry registry = new MetricRegistry();
 		final Meter requests = registry.meter(MetricRegistry.name(BaseNativeSelectorServer.class, "requests"));
 		final ConsoleReporter reporter = ConsoleReporter.forRegistry(registry).convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
-		reporter.start(1, TimeUnit.SECONDS);
+		//reporter.start(1, TimeUnit.SECONDS);
 
 	   // Create the handler
 		Scribe.Iface serviceInterface = new Scribe.Iface() {
-			public ResultCode log(List<LogEntry> messages) throws TException {
-				requests.mark();
+			public ResultCode Log(List<LogEntry> messages) throws TException {
+				//requests.mark();
+				
 				for (LogEntry message : messages) {
 					log.info("{}: {}", message.getCategory(),message.getMessage());
+					System.out.println(message.getCategory() + ":" + message.getMessage());
 				}
 				return ResultCode.OK;
 			}
 		};
 		
-		TServerSocket serverTransport = new TServerSocket(7911);
+		TServerSocket serverTransport = new TServerSocket(8888);
 		Scribe.Processor<Scribe.Iface> processor = new Scribe.Processor<Scribe.Iface>(serviceInterface);
 		
 		final TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));

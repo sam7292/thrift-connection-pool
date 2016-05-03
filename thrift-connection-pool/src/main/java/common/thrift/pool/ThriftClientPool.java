@@ -3,16 +3,13 @@ package common.thrift.pool;
 import org.apache.commons.pool.BasePoolableObjectFactory;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.thrift.TServiceClient;
-import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
-import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ThriftClientPool<T extends TServiceClient> implements AutoCloseable {
-	private static final Logger LOGGER = LoggerFactory.getLogger(ThriftClientPool.class);
+	static final Logger LOGGER = LoggerFactory.getLogger(ThriftClientPool.class);
+	
 	private final GenericObjectPool<T> internalPool;
 
 	public ThriftClientPool(ClientFactory<T> clientFactory, GenericObjectPool.Config poolConfig, String host, int port) {
@@ -51,43 +48,6 @@ public class ThriftClientPool<T extends TServiceClient> implements AutoCloseable
 			if (obj.getInputProtocol().getTransport().isOpen()) {
 				obj.getInputProtocol().getTransport().close();
 			}
-		}
-	}
-
-	public static interface ClientFactory<T> {	
-		T make(TProtocol tProtocol);
-	}
-
-	public static interface ProtocolFactory {
-		TProtocol make();
-	}
-
-	public static class BinaryOverSocketProtocolFactory implements ProtocolFactory {
-		private String host;
-		private int port;
-		
-		public BinaryOverSocketProtocolFactory(String host, int port) {
-			this.host = host;
-			this.port = port;
-		}
-		
-		public TProtocol make() {
-			TTransport transport = new TSocket(host, port);
-			try {
-				transport.open();
-			} catch (TTransportException e) {
-				LOGGER.warn("whut?", e);
-				throw new ThriftClientException("Can not make protocol", e);
-			}
-			return new TBinaryProtocol(transport);
-		}
-	}
-
-	public static class ThriftClientException extends RuntimeException {
-		
-		private static final long serialVersionUID = -2275296727467192665L;
-		public ThriftClientException(String message, Exception e) {
-			super(message, e);
 		}
 	}
 
